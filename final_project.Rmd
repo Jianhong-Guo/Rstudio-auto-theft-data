@@ -1,0 +1,258 @@
+---
+title: "When and Where do auto thefts occur?"
+author: "Jessica Jia-Ni Xu, Shaunee Callender, Shi Tang, Jianhong Guo, 0103, 103-1"
+subtitle: Analyze of the auto theft data from Toronto Police Service
+output:
+  beamer_presentation: default
+  slidy_presentation: default
+  ioslides_presentation: default
+  widescreen: yes
+---
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# echo=FALSE will stop the code chunk from appearing in the knit document
+# warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
+library(tidyverse)
+library(readr)
+library(dplyr)
+install.packages("kableExtra")
+library(kableExtra)
+auto_thefts <- read_csv("auto_thefts.csv")
+neighbourhood_profiles_2016 <- read_csv("neighbourhood_profiles_2016.csv")
+new_auto_thefts <- auto_thefts %>% select(Index_, occurrenceyear, occurrencemonth, occurrenceday, occurrencedayofyear, occurrencedayofweek, occurrencehour, Hood_ID, Neighbourhood, premisetype) %>% filter(occurrenceyear >= 2014) %>% mutate(occurrencedayofweek = factor(occurrencedayofweek, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")))%>% mutate(occurrencemonth = factor(occurrencemonth, levels = c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")))
+
+```
+
+## Introduction
+
+- **Auto thefts Data** from Toronto Police Service
+
+- **Goal:** reduce the number of Auto Thefts
+
+- **Focus** on the location and time
+
+- Statistical inferences: Histograms, box plots, bar plots
+
+- Chi-Squared tests, hypothesis tesing
+
+
+## Objectives 
+
+To answer the following questions:
+
+- Do some **areas** have a higher incidence of auto thefts?
+
+- Are most auto thefts carried out at a specific **time** of day?
+
+- Do the **area** & the **time** of incident occurred independent of each other?
+
+
+## Data Summary 
+New Variables:
+
+<font size="5">- **day_night** - Groups the hours of the day: Day 06:00-18:00 & Night 18:00-06:00. </font> 
+
+<font size="5">- **daytime** - Groups the hours of the day: Morning 06:00-12:00, afternoon 12:00-18:00, evening 18:00-00:00, late night 00:00-06:00.</font>
+
+<font size="5">- **Area** - Groups Hood ID into districts: East York, Etobicoke, North York, Old Toronto, Scarborough and York. </font>
+
+<font size="5">- **crime_rate** - Crime rate for a specific area in 2016.</font>
+
+## Data Summary (cont'd)
+New Data Frames:
+
+- **new_auto_thefts** - created from *auto_thefts* with variables related to the time and location, included year 2014-2018.
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4}
+glimpse(new_auto_thefts)
+```
+
+
+## Statistical Methods
+- **Hypothesis test** Relationship between auto thefts occur in day and night
+
+- **Chi squared test** Independence between the occurrence time and location & Independence between occurrence time and premise type.
+
+- **Bootstrap sampling** Confidence interval of proportion of auto thefts occur in day time
+
+## Results
+### Frequency versus years (2014-2018)
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4}
+new_auto_thefts %>% ggplot(aes(x = occurrenceyear)) + geom_histogram(binwidth = 1, color = "black", fill = "gray") + labs(title = "Frequency versus occurrence year", x = "Occurrence year of the crime" , y = "Total frequency from 2014 to 2018")
+```
+
+<font size="5">- Auto thefts remained fairly constant from 2014 - 2017, with an increase in 2018.</font>
+
+## Frenquency versus months
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=3.5}
+new_auto_thefts %>% ggplot(aes(x = occurrencemonth)) + geom_bar(color = "black", fill = "gray") + labs(title = "Frequency versus occurrence month", x = "Occurrence month of the crime" , y = "Total frequency from 2014 to 2018")
+
+```
+
+<font size="5">- No obvious trends between occurrence month and number of auto thefts crimes.</font>
+
+<font size="5">- The months with the least auto theft crimes are January and February. </font>
+ 
+## Frenquency versus day of week
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=3.5}
+new_auto_thefts %>% ggplot(aes(x = occurrencedayofweek)) + geom_bar(color = "black", fill = "gray") + labs(title = "Frequency versus occurrence day of week", x = "Occurrence day of week of the crime" , y = "Total frequency from 2014 to 2018")
+```
+
+<font size="5">-The number of auto theft crimes remains fairly consistent thoughout the week.</font>
+
+##  Frequency versus occurrence hour
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=3.5}
+new_auto_thefts %>% ggplot(aes(x = occurrencehour)) + geom_histogram(binwidth = 1, color = "black", fill = "gray") + labs(title = "Frequency versus occurrence hour", x = "Occurrence hour of the crime" , y = "Total frequency from 2014 to 2018")
+```
+<font size="5">- The frequency of auto thefts begins to steadily increase after 16 o'clock.</font>
+
+<font size="5">- There is a mode around 23 which corresponds to 11 o’clock in the evening.</font> 
+
+## Frequency versus occurrence hour (2014 to 2018)
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4}
+new_auto_thefts %>% ggplot(aes(x=occurrencehour)) + geom_histogram(binwidth = 1, color="black", fill="gray") + labs(title = "Frequency versus occurrence hour", x = "Occurrence hour of the crime" , y = "Total frequency")  + facet_wrap(~occurrenceyear)
+```
+
+<font size="5">- The occurrence hour of auto theft crimes tends to remains fairly consistent throughout the years. </font>
+
+## Summary table (proportion of auto thefts in day and night) 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6}
+dayandnight <- new_auto_thefts %>% select(Index_, occurrencehour) %>% mutate(daytime = ifelse(occurrencehour >= 6 & occurrencehour < 18, "Day", "Night")) 
+dayandnight %>% group_by(daytime) %>% summarize(n=n(), Proportion = n/18130)
+
+```
+
+## Hypothesis test
+<font size="5"> $H_{0}$ = 0.5 (assume that the proportion that auto thefts happen in day time is 0.5)</font>
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4}
+auto<-auto_thefts %>% select(Index_, occurrenceyear, occurrencemonth, occurrenceday, occurrencedayofyear, occurrencedayofweek, occurrencehour)%>% mutate(day_night=ifelse(occurrencehour>=6 &occurrencehour<18,"day", "night"))
+test_statistic<-auto%>%summarise(prop_day=sum(day_night=="day")/n(), prop_night=sum(day_night=="night")/n(),n=n())
+total<-nrow(auto)
+repetitions<-10000
+simulated_stats<-rep(NA,repetitions)
+set.seed(6862)
+for (i in 1:repetitions)
+{
+  new_sim <-sample(c("day","night"),
+                   size=total,
+                   replace = TRUE)
+  sim_p<-sum(new_sim=="day")/total
+  simulated_stats[i]<-sim_p
+}
+sim<-data_frame(prop_day=simulated_stats)
+sim%>% ggplot(aes(x=prop_day))+geom_histogram(colour="black",fill="grey")+labs(x="Simulated proportions of auto thefts that happened in day time if p=0.5(samples of size n=18178)")
+
+```
+
+<font size="5">- P_value is extremely small, very close to 0.</font>
+
+## Bootstraps and Confidence interval
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4}
+set.seed(6862)
+boot_prop<-rep(NA,10000)
+for (i in 1:10000)
+{boot_samp<-auto %>% sample_n(size=18178, replace=TRUE)
+boot_prop[i]<-as.numeric(boot_samp %>% summarise(prop_day=sum(day_night=="day")/18178))
+}
+boot_prop<-data_frame(prop_day=boot_prop)
+ggplot(boot_prop,aes(x=prop_day))+geom_histogram(color="black",fill="grey", bins=30)+labs(title="Bootstrap distribution of proportion of auto thefts \n occurred during day time based on a sample of 18178", x="Bootstrap proportions")+ geom_vline(xintercept = quantile(boot_prop$prop_day,c(0.025)),color="red"
+)+geom_vline(xintercept = quantile(boot_prop$prop_day,c(0.975)),color="blue"
+)
+quantile(boot_prop$prop_day,c(0.025,0.975))
+
+```
+
+## Location versus auto theft crimes
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4}
+
+table1 <- new_auto_thefts %>% group_by(Hood_ID) %>% summarize(number_of_crimes=n(), proportion=(number_of_crimes/18561)) %>% arrange(desc(number_of_crimes))
+head(table1, 10)
+
+```
+
+<font size="5">- The highest number of crimes occured in Hood_ID 1 and 14.</font>
+
+## District and auto theft crimes.
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4}
+
+new_auto_thefts <- new_auto_thefts %>% mutate(Area = ifelse(Hood_ID <= 20, "Etobicoke", ifelse(21<=Hood_ID & Hood_ID<=53, "North York", ifelse(54<=Hood_ID & Hood_ID<=61,"East York",ifelse(62<=Hood_ID & Hood_ID<=105,"Old Toronto",ifelse(106<=Hood_ID & Hood_ID<=115,"York","Scarborough"))))))
+
+table2 <- new_auto_thefts %>% group_by(Area) %>% summarize(n=n(), proportion=(n/18561)) %>% arrange(desc(n))
+new_auto_thefts %>% ggplot(aes(x = Area)) + geom_bar()+labs(title="District vs Auto Theft Frequency", x="District", y= "Frequency")
+
+```
+
+<font size="5">- North York had the most auto theft crimes, while East York had the least.</font>
+
+## District and Crime Rate
+```{r, echo=FALSE, message=FALSE, warning=FALSE, }
+table4 <- new_auto_thefts %>% filter(occurrenceyear == 2016) %>% group_by(Hood_ID) %>% summarise(n=n())
+new_data <- inner_join(x = table4, y = neighbourhood_profiles_2016, by = "Hood_ID")
+data_pop <- new_data %>% mutate(Area = ifelse(Hood_ID <= 20, "Etobicoke", ifelse(21<=Hood_ID & Hood_ID<=53, "North York", ifelse(54<=Hood_ID & Hood_ID<=61,"East York",ifelse(62<=Hood_ID & Hood_ID<=105,"Old Toronto",ifelse(106<=Hood_ID & Hood_ID<=115,"York","Scarborough")))))) 
+
+data_pop <-data_pop %>% select(Hood_ID, n, pop_2016, Area)
+table3 <- data_pop %>% group_by(Area) %>% summarise(n_2016=sum(n),population_2016=sum(pop_2016))
+table3 <- table3 %>% mutate(crime_rate = round(((n_2016/population_2016)*100000),2))%>% arrange(desc(crime_rate))
+
+kable(table3, caption = "Crime Rate for 2016") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  kableExtra::kable_styling(latex_options = "hold_position")
+
+```
+
+## Chi-squared test for time of day and district
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+new_auto_thefts <- new_auto_thefts %>% mutate(daytime = ifelse(occurrencehour < 6, "Late night", ifelse(occurrencehour < 12, "Morning", ifelse(occurrencehour < 18, "Afternoon", "Night"))))
+
+areatimetable <- table(new_auto_thefts$Area, new_auto_thefts$daytime)
+areatimetable
+
+chisq.test(areatimetable)
+```
+
+## Chi-sqaured test for time of day and premise type
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+premisetimetable <- table(new_auto_thefts$premisetype, new_auto_thefts$daytime)
+premisetimetable
+
+chisq.test(premisetimetable)
+
+```
+
+## Distribution across location
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 5, fig.width = 4}
+new_auto_thefts <- new_auto_thefts %>% mutate(Area = ifelse(Hood_ID <= 20, "Etobicoke", ifelse(21<=Hood_ID & Hood_ID<=53, "North York", ifelse(54<=Hood_ID & Hood_ID<=61,"East York",ifelse(62<=Hood_ID & Hood_ID<=105,"Old Toronto",ifelse(106<=Hood_ID & Hood_ID<=115,"York","Scarborough"))))))
+
+new_auto_thefts %>% ggplot(aes(x = Area, y = occurrencehour)) + geom_boxplot() + coord_flip() + labs(title = "Occurrence hour vs District", y = "Occurrence hour of auto theft", x = "District")
+
+new_auto_thefts %>% ggplot(aes(x = premisetype, y = occurrencehour)) + geom_boxplot() + coord_flip() + labs(title = "Occurrence hour vs Premise", y = "Occurrence hour of auto theft", x = "Premise")
+```
+
+## Conclusion
+
+- Certain areas have a higher incidence of auto thefts which is shown by the varying crime rates.
+
+- Most auto thefts tend to be carried out at night, more specifically between evening and late night. This was confirmed by bootstrap testing and hypothesis testing.
+
+- There is strong evidence to suggest the time of day of the incident and the location of the incident are interdependent.
+
+
+## Recommendations
+
+- The Toronto Police Service should send more patrols to areas with a higher crime rate.
+
+- Officers should be put on patrol at night because that is when more auto thefts tend to be carried out.
+
+
+## Limitations
+
+- As the seasons change the sun sets at different times and this may have an impact on auto thefts.
+
+- The location data had to be generalised and this resulted in large variations in the size of areas, which affected our analysis.
+
+- The type of car stolen was not given. Newer cars have are built differently and could possibly be easier to break into. 
+
+
